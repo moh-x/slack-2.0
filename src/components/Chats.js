@@ -5,168 +5,177 @@ import { useSelector } from "react-redux";
 import firebase from "firebase/app";
 import "firebase/firestore";
 import { selectChannel } from "../features/appSlice";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useContext } from "react";
 import { db } from "../firebase";
 import { useCollection, useDocument } from "react-firebase-hooks/firestore";
 import Message from "./Message";
+import { ChannelContext } from "../contexts/ChannelContext";
 
-function Chats({ user }) {
-  const chatRef = useRef(null);
-  const channelId = useSelector(selectChannel);
-  const [channelInfo] = useDocument(
-    channelId && db.collection("channels").doc(channelId)
-  );
-  const [channelMessages, loading] = useCollection(
-    channelId &&
-      db
-        .collection("channels")
-        .doc(channelId)
-        .collection("messages")
-        .orderBy("timestamp", "asc")
-  );
+function Chats({ user, sidebarView }) {
+	const { setChannel } = useContext(ChannelContext);
+	const chatRef = useRef(null);
+	const channelId = useSelector(selectChannel);
+	const [channelInfo] = useDocument(
+		channelId && db.collection("channels").doc(channelId)
+	);
 
-  // console.log(channelInfo?.data().name);
-  // console.log(channelMessages);
+	useEffect(() => {
+		setChannel(channelInfo?.data().name);
+	}, [channelInfo]);
 
-  const inputRef = useRef(null);
-  const sendMessage = (e) => {
-    e.preventDefault(); // Prevents a page refresh.
+	const [channelMessages, loading] = useCollection(
+		channelId &&
+			db
+				.collection("channels")
+				.doc(channelId)
+				.collection("messages")
+				.orderBy("timestamp", "asc")
+	);
 
-    if (!channelId) return false;
+	// console.log(channelInfo?.data().name);
+	// console.log(channelMessages);
 
-    db.collection("channels").doc(channelId).collection("messages").add({
-      message: inputRef.current.value,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      user: user?.displayName,
-      userImage: user?.photoURL,
-    });
+	const inputRef = useRef(null);
+	const sendMessage = (e) => {
+		e.preventDefault(); // Prevents a page refresh.
 
-    chatRef?.current?.scrollIntoView({ behaviour: "smooth" });
+		if (!channelId) return false;
 
-    inputRef.current.value = "";
-  };
+		db.collection("channels").doc(channelId).collection("messages").add({
+			message: inputRef.current.value,
+			timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+			user: user?.displayName,
+			userImage: user?.photoURL,
+		});
 
-  useEffect(() => {
-    chatRef?.current?.scrollIntoView({ behaviour: "smooth" });
-  }, [channelId, loading]);
+		chatRef?.current?.scrollIntoView({ behaviour: "smooth" });
 
-  return (
-    <ChatSection>
-      {channelInfo && (
-        <>
-          <ChatHeader>
-            <HeaderLeft>
-              <h4>
-                <strong>#{channelInfo?.data().name}</strong>
-              </h4>
-              <StarBorderOutlinedIcon />
-            </HeaderLeft>
-            <HeaderRight>
-              <p>
-                <InfoOutlinedIcon /> Details
-              </p>
-            </HeaderRight>
-          </ChatHeader>
+		inputRef.current.value = "";
+	};
 
-          <ChatBody>
-            {channelMessages?.docs.map((doc) => {
-              const { message, timestamp, user, userImage } = doc.data();
+	useEffect(() => {
+		chatRef?.current?.scrollIntoView({ behaviour: "smooth" });
+	}, [channelId, loading]);
 
-              return (
-                <Message
-                  key={doc.id}
-                  message={message}
-                  timestamp={timestamp}
-                  user={user}
-                  userImage={userImage}
-                />
-              );
-            })}
-            <ChatBottom ref={chatRef} />
-          </ChatBody>
+	return (
+		!sidebarView && (
+			<ChatSection>
+				{channelInfo && (
+					<>
+						<ChatHeader>
+							<HeaderLeft>
+								<h4>
+									<strong>#{channelInfo?.data().name}</strong>
+								</h4>
+								<StarBorderOutlinedIcon />
+							</HeaderLeft>
+							<HeaderRight>
+								<p>
+									<InfoOutlinedIcon /> Details
+								</p>
+							</HeaderRight>
+						</ChatHeader>
 
-          <ChatInput>
-            <form>
-              <input
-                placeholder={`Message #${channelInfo?.data().name}`}
-                ref={inputRef}
-              />
-              <button hidden type="submit" onClick={sendMessage}>
-                SEND
-              </button>
-            </form>
-          </ChatInput>
-        </>
-      )}
-    </ChatSection>
-  );
+						<ChatBody>
+							{channelMessages?.docs.map((doc) => {
+								const { message, timestamp, user, userImage } = doc.data();
+
+								return (
+									<Message
+										key={doc.id}
+										message={message}
+										timestamp={timestamp}
+										user={user}
+										userImage={userImage}
+									/>
+								);
+							})}
+							<ChatBottom ref={chatRef} />
+						</ChatBody>
+
+						<ChatInput>
+							<form>
+								<input
+									placeholder={`Message #${channelInfo?.data().name}`}
+									ref={inputRef}
+								/>
+								<button hidden type='submit' onClick={sendMessage}>
+									SEND
+								</button>
+							</form>
+						</ChatInput>
+					</>
+				)}
+			</ChatSection>
+		)
+	);
 }
 
 export default Chats;
 
 const ChatSection = styled.section`
-  flex: 0.7;
-  flex-grow: 1;
-  overflow-y: scroll;
-  margin-top: 60px; ;
+	flex: 0.7;
+	flex-grow: 1;
+	overflow-y: scroll;
+	margin-top: 60px; ;
 `;
 
 const ChatHeader = styled.header`
-  display: flex;
-  justify-content: space-between;
-  padding: 20px;
-  border-bottom: 1px solid lightgray;
+	display: flex;
+	justify-content: space-between;
+	padding: 20px;
+	border-bottom: 1px solid lightgray;
 `;
 
 const HeaderLeft = styled.div`
-  display: flex;
-  align-items: center;
+	display: flex;
+	align-items: center;
 
-  > h4 {
-    display: flex;
-    text-transform: lowercase;
-  }
+	> h4 {
+		display: flex;
+		text-transform: lowercase;
+	}
 
-  > .MuiSvgIcon-root {
-    margin-left: 20px;
-    font-size: 18px;
-  }
+	> .MuiSvgIcon-root {
+		margin-left: 20px;
+		font-size: 18px;
+	}
 `;
 
 const HeaderRight = styled.div`
-  > p {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-  }
+	> p {
+		display: flex;
+		align-items: center;
+		font-size: 14px;
+	}
 
-  > p > .MuiSvgIcon-root {
-    margin-right: 5px !important;
-    font-size: 16px;
-  }
+	> p > .MuiSvgIcon-root {
+		margin-right: 5px !important;
+		font-size: 16px;
+	}
 `;
 
 const ChatBody = styled.div``;
 
 const ChatBottom = styled.div`
-  padding-bottom: 200px;
+	padding-bottom: 200px;
 `;
 
 const ChatInput = styled.div`
-  border-radius: 20px;
-  > form {
-    position: relative;
-    display: flex;
-    justify-content: center;
-  }
+	border-radius: 20px;
+	> form {
+		position: relative;
+		display: flex;
+		justify-content: center;
+	}
 
-  > form > input {
-    position: fixed;
-    bottom: 30px;
-    width: 60%;
-    border: 1px solid gray;
-    border-radius: 3px;
-    padding: 20px;
-    outline: none;
-  }
+	> form > input {
+		position: fixed;
+		bottom: 30px;
+		width: 60%;
+		border: 1px solid gray;
+		border-radius: 3px;
+		padding: 20px;
+		outline: none;
+	}
 `;

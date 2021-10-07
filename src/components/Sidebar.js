@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { useCollection } from "react-firebase-hooks/firestore";
 import FiberManualRecordIcon from "@material-ui/icons/FiberManualRecord";
 import CreateIcon from "@material-ui/icons/Create";
@@ -16,44 +16,51 @@ import AddIcon from "@material-ui/icons/Add";
 import SidebarOption from "./SidebarOption";
 import { db } from "../firebase";
 
-function Sidebar({ user }) {
+function Sidebar({ user, sidebarView, setSidebarView, isMobile }) {
   const [channels] = useCollection(db.collection("channels"));
 
   return (
-    <SidebarContainer>
-      <SidebarHeader>
-        <SidebarInfo>
-          <h2>The Whispers</h2>
-          <h3>
-            <FiberManualRecordIcon />
-            {user?.displayName}
-          </h3>
-        </SidebarInfo>
+    (!isMobile || (isMobile && sidebarView)) && (
+      <SidebarContainer sidebarView={sidebarView} isMobile={isMobile}>
+        <SidebarHeader>
+          <SidebarInfo>
+            <h2>The Whispers</h2>
+            <h3>
+              <FiberManualRecordIcon />
+              {user?.displayName}
+            </h3>
+          </SidebarInfo>
 
-        <CreateIcon />
-      </SidebarHeader>
+          <CreateIcon />
+        </SidebarHeader>
 
-      <SidebarOption Icon={InsertCommentIcon} title={"Threads"} />
-      <SidebarOption Icon={InboxIcon} title={"Mentions & reactions"} />
-      <SidebarOption Icon={DraftsIcon} title={"Saved Items"} />
-      <SidebarOption Icon={BookmarkBorderIcon} title={"Channel browser"} />
-      <SidebarOption Icon={PeopleAltIcon} title={"People & user groups"} />
-      <SidebarOption Icon={AppsIcon} title={"Apps"} />
-      <SidebarOption Icon={FileCopyIcon} title={"File browser"} />
-      <SidebarOption Icon={ExpandLessIcon} title={"Show less"} />
+        <SidebarOption Icon={InsertCommentIcon} title={"Threads"} />
+        <SidebarOption Icon={InboxIcon} title={"Mentions & reactions"} />
+        <SidebarOption Icon={DraftsIcon} title={"Saved Items"} />
+        <SidebarOption Icon={BookmarkBorderIcon} title={"Channel browser"} />
+        <SidebarOption Icon={PeopleAltIcon} title={"People & user groups"} />
+        <SidebarOption Icon={AppsIcon} title={"Apps"} />
+        <SidebarOption Icon={FileCopyIcon} title={"File browser"} />
+        <SidebarOption Icon={ExpandLessIcon} title={"Show less"} />
 
-      <hr />
+        <hr />
 
-      <SidebarOption Icon={ExpandMoreIcon} title={"Channels"} />
+        <SidebarOption Icon={ExpandMoreIcon} title={"Channels"} />
 
-      <hr />
+        <hr />
 
-      <SidebarOption Icon={AddIcon} title={"Add channel"} addChannelOption />
+        <SidebarOption Icon={AddIcon} title={"Add channel"} addChannelOption />
 
-      {channels?.docs.map((doc) => (
-        <SidebarOption key={doc.id} id={doc.id} title={doc.data().name} />
-      ))}
-    </SidebarContainer>
+        {channels?.docs.map((doc) => (
+          <SidebarOption
+            key={doc.id}
+            id={doc.id}
+            title={doc.data().name}
+            setSidebarView={setSidebarView}
+          />
+        ))}
+      </SidebarContainer>
+    )
   );
 }
 
@@ -71,6 +78,12 @@ const SidebarContainer = styled.aside`
     margin-top: 10px;
     margin-bottom: 10px;
     border: 1px solid #49274b;
+  }
+
+  @media screen and (max-width: 425px) {
+    max-width: 100vw;
+    width: 100vw;
+    flex: 0.8;
   }
 `;
 

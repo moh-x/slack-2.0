@@ -35,7 +35,7 @@ function Login({ loading }) {
           />
         ) : (
           <>
-            <h1>Sign in to The Whispers</h1>
+            <h1>Sign in Whisper House</h1>
             <p>xodeeq.netlify.com</p>
 
             <Button onClick={signIn}>Sign in with Google</Button>
@@ -81,5 +81,13 @@ const InnerLoginContainer = styled.div`
     align-self: center;
     margin-top: 50px;
     color: purple;
+  }
+
+  @media screen and (max-width: 480px) {
+    padding: 50px;
+
+    > h1 {
+      font-size: 24px;
+    }
   }
 `;
